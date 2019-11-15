@@ -1,5 +1,6 @@
-# rviz_mouse_pub
-RViz plugin to publish mouse interactions with 2D map.
+# RViz hitl SLAM interaction tool
+
+RViz plugin to publish human interaction for human in the loop SLAM
 
 ## Dependencies
 Install [ROS](http://wiki.ros.org/ROS/Installation)
@@ -14,5 +15,4 @@ Install [ROS](http://wiki.ros.org/ROS/Installation)
     rosrun rviz rviz
     ```
 1. Add the plugin to RViz using the "+" button on the toolbar.
-1. Click on the "MousePub" button to activate the tool
-1. Mouse events will be published to `mouse_pub`
+1. ???
