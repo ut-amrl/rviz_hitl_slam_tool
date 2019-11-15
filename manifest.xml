@@ -1,13 +1,13 @@
 <package>
-  <description brief="RViz mouse publisher">
+  <description brief="RViz hitl SLAM interaction tool">
 
-     Publish 2D interaction of mouse with the map.
+     Publish human interaction for human in the loop SLAM
 
   </description>
   <author>Joydeep Biswas</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>https://github.com/umass-amrl/rviz_mouse_pub</url>
+  <url>https://github.com/ut-amrl/rviz_hitl_slam_tool</url>
   <depend package="rviz"/>
   <depend package="std_msgs"/>
   <depend package="geometry_msgs"/>
