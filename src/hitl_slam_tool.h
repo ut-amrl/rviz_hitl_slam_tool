@@ -27,8 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PLANT_FLAG_TOOL_H
-#define PLANT_FLAG_TOOL_H
+#ifndef HITL_SLAM_TOOL_H
+#define HITL_SLAM_TOOL_H
 
 #ifndef Q_MOC_RUN
 #include <ros/ros.h>
@@ -39,16 +39,20 @@ namespace rviz {
   class ViewportMouseEvent;
 }  // namespace rviz
 
-namespace rviz_mouse_pub {
+namespace Ogre {
+  class ManualObject;
+}  // namespace Ogre
 
-class MousePub : public rviz::Tool {
+namespace rviz_hitl_slam {
+
+class HitlSlamTool : public rviz::Tool {
 Q_OBJECT
 public:
   ros::NodeHandle n_;
   ros::Publisher mouse_publisher_;
 
-  MousePub();
-  ~MousePub();
+  HitlSlamTool();
+  ~HitlSlamTool();
 
   virtual void onInitialize();
 
@@ -56,8 +60,14 @@ public:
   virtual void deactivate();
 
   virtual int processMouseEvent(rviz::ViewportMouseEvent& event);
+
+  Ogre::ManualObject* myManualObject;
+  float start_x;
+  float start_y;
+  bool selection_active;
+
 };
 
-}  // namespace rviz_mouse_pub
+}  // namespace rviz_hitl_slam
 
-#endif // MOUSE_PUB_TOOL_H
+#endif // HITL_SLAM_TOOL_H

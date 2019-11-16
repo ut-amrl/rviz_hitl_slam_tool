@@ -30,6 +30,7 @@
 
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreEntity.h>
+#include <OGRE/OgreManualObject.h>
 
 #include <ros/console.h>
 
@@ -40,29 +41,67 @@
 #include <rviz/geometry.h>
 #include <rviz/properties/vector_property.h>
 
-#include "mouse_pub_tool.h"
+#include "hitl_slam_tool.h"
 
-namespace rviz_mouse_pub {
+namespace rviz_hitl_slam {
 
-MousePub::MousePub() {
-  shortcut_key_ = 'l';
+HitlSlamTool::HitlSlamTool() :
+    myManualObject(NULL),
+    start_x(0),
+    start_y(0),
+    selection_active(false) {
+  shortcut_key_ = 's';
   ros::NodeHandle n_;
-  mouse_publisher_ = n_.advertise<geometry_msgs::Point32>("mouse_pub", 1);
+  mouse_publisher_ = n_.advertise<geometry_msgs::Point32>("hitl_slam", 1);
 }
 
-MousePub::~MousePub() {
+HitlSlamTool::~HitlSlamTool() {
 }
 
-void MousePub::onInitialize() {
+void HitlSlamTool::onInitialize() {
+  printf("%s:%d\n", __FILE__, __LINE__);
+  myManualObject = scene_manager_->createManualObject("hitl_line");
+  printf("%s:%d\n", __FILE__, __LINE__);
+  Ogre::SceneNode* myManualObjectNode =
+  scene_manager_->getRootSceneNode()->createChildSceneNode(
+    "hitl_line_node");
+  printf("%s:%d\n", __FILE__, __LINE__);
+  // NOTE: The second parameter to the create method is the resource group the
+  // material will be added to.
+  // If the group you name does not exist (in your resources.cfg file) the
+  // library will assert() and your program will crash
+  printf("Making material...\n");
+  Ogre::MaterialPtr myManualObjectMaterial =
+      Ogre::MaterialManager::getSingleton().create(
+        "hitl_lineMaterial", "rviz");
+  printf("Success.\n");
+  myManualObjectMaterial->setReceiveShadows(false);
+  myManualObjectMaterial->getTechnique(0)->setLightingEnabled(true);
+  myManualObjectMaterial->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
+  myManualObjectMaterial->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
+  myManualObjectMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(
+      0,0,1);
+//   myManualObjectMaterial->dispose();  // dispose pointer, not the
+  // material
+  myManualObject->setDynamic(true);
+  myManualObject->begin("hitl_lineMaterial",
+                        Ogre::RenderOperation::OT_LINE_LIST);
+  myManualObject->position(3, 2, 1);
+  myManualObject->position(4, 1, 0);
+  // etc
+  myManualObject->end();
+  myManualObject->setVisible(false);
+
+  myManualObjectNode->attachObject(myManualObject);
 }
 
-void MousePub::activate() {
+void HitlSlamTool::activate() {
 }
 
-void MousePub::deactivate() {
+void HitlSlamTool::deactivate() {
 }
 
-int MousePub::processMouseEvent(rviz::ViewportMouseEvent& event) {
+int HitlSlamTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
   static const bool kDebug = false;
   Ogre::Vector3 intersection;
   Ogre::Plane ground_plane(Ogre::Vector3::UNIT_Z, 0.0f);
@@ -71,6 +110,20 @@ int MousePub::processMouseEvent(rviz::ViewportMouseEvent& event) {
     if (kDebug) printf("Loc: %f %f\n", intersection.x, intersection.y);
     if (event.leftDown()) {
       if (kDebug) printf("LeftDown\n");
+      start_x = intersection.x;
+      start_y = intersection.y;
+      selection_active = true;
+      myManualObject->setVisible(true);
+    }
+    if (selection_active) {
+      myManualObject->beginUpdate(0);
+      myManualObject->position(start_x, start_y, 0);
+      myManualObject->position(intersection.x, intersection.y, 0);
+      myManualObject->end();
+    }
+    if (event.leftUp()) {
+      if (kDebug) printf("LeftUp\n");
+      myManualObject->setVisible(false);
       return Render | Finished;
     }
     geometry_msgs::Point32 p;
@@ -84,7 +137,7 @@ int MousePub::processMouseEvent(rviz::ViewportMouseEvent& event) {
   return Render;
 }
 
-}  // namespace rviz_mouse_pub
+}  // namespace rviz_hitl_slam
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(rviz_mouse_pub::MousePub, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_hitl_slam::HitlSlamTool, rviz::Tool)
