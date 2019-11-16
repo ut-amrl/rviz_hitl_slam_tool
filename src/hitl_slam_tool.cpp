@@ -41,64 +41,99 @@
 #include <rviz/geometry.h>
 #include <rviz/properties/vector_property.h>
 
+#include "rviz_hitl_slam_tool/HitlSlamInputMsg.h"
+
 #include "hitl_slam_tool.h"
+
+#include <eigen3/Eigen/Dense>
+
+using Eigen::Vector2f;
+using rviz_hitl_slam::State;
+using rviz_hitl_slam_tool::HitlSlamInputMsg;
 
 namespace rviz_hitl_slam {
 
 HitlSlamTool::HitlSlamTool() :
-    myManualObject(NULL),
-    start_x(0),
-    start_y(0),
-    selection_active(false) {
+    line_a_object_ (NULL),
+    line_b_object_ (NULL),
+    state(State::kDisabled) {
   shortcut_key_ = 's';
   ros::NodeHandle n_;
-  mouse_publisher_ = n_.advertise<geometry_msgs::Point32>("hitl_slam", 1);
+  publisher_ = n_.advertise<HitlSlamInputMsg>("hitl_slam_input", 1);
 }
 
 HitlSlamTool::~HitlSlamTool() {
 }
 
 void HitlSlamTool::onInitialize() {
-  printf("%s:%d\n", __FILE__, __LINE__);
-  myManualObject = scene_manager_->createManualObject("hitl_line");
-  printf("%s:%d\n", __FILE__, __LINE__);
-  Ogre::SceneNode* myManualObjectNode =
-  scene_manager_->getRootSceneNode()->createChildSceneNode(
-    "hitl_line_node");
-  printf("%s:%d\n", __FILE__, __LINE__);
-  // NOTE: The second parameter to the create method is the resource group the
-  // material will be added to.
-  // If the group you name does not exist (in your resources.cfg file) the
-  // library will assert() and your program will crash
-  printf("Making material...\n");
-  Ogre::MaterialPtr myManualObjectMaterial =
-      Ogre::MaterialManager::getSingleton().create(
-        "hitl_lineMaterial", "rviz");
-  printf("Success.\n");
-  myManualObjectMaterial->setReceiveShadows(false);
-  myManualObjectMaterial->getTechnique(0)->setLightingEnabled(true);
-  myManualObjectMaterial->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
-  myManualObjectMaterial->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
-  myManualObjectMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(
-      0,0,1);
-//   myManualObjectMaterial->dispose();  // dispose pointer, not the
-  // material
-  myManualObject->setDynamic(true);
-  myManualObject->begin("hitl_lineMaterial",
-                        Ogre::RenderOperation::OT_LINE_LIST);
-  myManualObject->position(3, 2, 1);
-  myManualObject->position(4, 1, 0);
-  // etc
-  myManualObject->end();
-  myManualObject->setVisible(false);
+  line_a_object_ = scene_manager_->createManualObject("hitl_line_a");
+  Ogre::SceneNode* line_a_node =
+      scene_manager_->getRootSceneNode()->createChildSceneNode(
+        "hitl_line_a_node");
 
-  myManualObjectNode->attachObject(myManualObject);
+  Ogre::MaterialPtr line_a_material =
+      Ogre::MaterialManager::getSingleton().create(
+        "hitl_line_a_material", "rviz");
+  line_a_material->setReceiveShadows(false);
+  line_a_material->getTechnique(0)->setLightingEnabled(true);
+  line_a_material->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
+  line_a_material->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
+  line_a_material->getTechnique(0)->getPass(0)->setSelfIllumination(0,0,1);
+  line_a_object_->setDynamic(true);
+  line_a_object_->begin("hitl_line_a_material",
+                      Ogre::RenderOperation::OT_LINE_LIST);
+  line_a_object_->position(3, 2, 1);
+  line_a_object_->position(4, 1, 0);
+  line_a_object_->end();
+  line_a_object_->setVisible(false);
+  line_a_node->attachObject( line_a_object_ );
+
+  line_b_object_ = scene_manager_->createManualObject("hitl_line_b");
+  Ogre::SceneNode* line_b_node =
+      scene_manager_->getRootSceneNode()->createChildSceneNode(
+          "hitl_line_b_node");
+
+  Ogre::MaterialPtr line_b_material =
+      Ogre::MaterialManager::getSingleton().create(
+          "hitl_line_b_material", "rviz");
+  line_b_material->setReceiveShadows(false);
+  line_b_material->getTechnique(0)->setLightingEnabled(true);
+  line_b_material->getTechnique(0)->getPass(0)->setDiffuse(1,0,0,0);
+  line_b_material->getTechnique(0)->getPass(0)->setAmbient(1,0,0);
+  line_b_material->getTechnique(0)->getPass(0)->setSelfIllumination(1,0,0);
+  line_b_object_->setDynamic(true);
+  line_b_object_->begin("hitl_line_b_material",
+                        Ogre::RenderOperation::OT_LINE_LIST);
+  line_b_object_->position(3, 2, 1);
+  line_b_object_->position(4, 1, 0);
+  line_b_object_->end();
+  line_b_object_->setVisible(false);
+  line_b_node->attachObject( line_b_object_ );
 }
 
 void HitlSlamTool::activate() {
+  state = State::kStartLineA;
 }
 
 void HitlSlamTool::deactivate() {
+  state = State::kDisabled;
+}
+
+void HitlSlamTool::Publish() {
+  HitlSlamInputMsg msg;
+  msg.line_a_start.x = line_a_start.x();
+  msg.line_a_start.y = line_a_start.y();
+  msg.line_a_start.z = 0;
+  msg.line_a_end.x = line_a_end.x();
+  msg.line_a_end.y = line_a_end.y();
+  msg.line_a_end.z = 0;
+  msg.line_b_start.x = line_b_start.x();
+  msg.line_b_start.y = line_b_start.y();
+  msg.line_b_start.z = 0;
+  msg.line_b_end.x = line_b_end.x();
+  msg.line_b_end.y = line_b_end.y();
+  msg.line_b_end.z = 0;
+  publisher_.publish(msg);
 }
 
 int HitlSlamTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
@@ -107,30 +142,65 @@ int HitlSlamTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
   Ogre::Plane ground_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(
         event.viewport, ground_plane, event.x, event.y, intersection)) {
-    if (kDebug) printf("Loc: %f %f\n", intersection.x, intersection.y);
-    if (event.leftDown()) {
-      if (kDebug) printf("LeftDown\n");
-      start_x = intersection.x;
-      start_y = intersection.y;
-      selection_active = true;
-      myManualObject->setVisible(true);
+    if (kDebug) {
+      printf("State: %d\n", static_cast<int>(state));
     }
-    if (selection_active) {
-      myManualObject->beginUpdate(0);
-      myManualObject->position(start_x, start_y, 0);
-      myManualObject->position(intersection.x, intersection.y, 0);
-      myManualObject->end();
+    switch (state) {
+      case State::kDisabled: {
+
+      } break;
+
+      case State::kStartLineA: {
+        if (event.leftDown()) {
+          line_a_start.x() = intersection.x;
+          line_a_start.y() = intersection.y;
+          state = State::kLineA;
+          line_a_object_->setVisible(true);
+        }
+      } break;
+
+      case State::kLineA: {
+        line_a_end.x() = intersection.x;
+        line_a_end.y() = intersection.y;
+        line_a_object_->beginUpdate(0);
+        line_a_object_->position(line_a_start.x(), line_a_start.y(), 0);
+        line_a_object_->position(line_a_end.x(), line_a_end.y(), 0);
+        line_a_object_->end();
+        if (event.leftUp()) {
+          state = State::kStartLineB;
+        }
+      } break;
+
+      case State::kStartLineB: {
+        if (event.leftDown()) {
+          line_b_start.x() = intersection.x;
+          line_b_start.y() = intersection.y;
+          state = State::kLineB;
+          line_b_object_->setVisible(true);
+        }
+      } break;
+
+      case State::kLineB: {
+        line_b_end.x() = intersection.x;
+        line_b_end.y() = intersection.y;
+        line_b_object_->beginUpdate(0);
+        line_b_object_->position(line_b_start.x(), line_b_start.y(), 0);
+        line_b_object_->position(line_b_end.x(), line_b_end.y(), 0);
+        line_b_object_->end();
+        if (event.leftUp()) {
+          state = State::kDisabled;
+          line_a_object_->setVisible(false);
+          line_b_object_->setVisible(false);
+          Publish();
+          return Render | Finished;
+        }
+      } break;
+
+      default: {
+        fprintf(stderr, "ERROR: Unknown state %d\n", static_cast<int>(state));
+      }
     }
-    if (event.leftUp()) {
-      if (kDebug) printf("LeftUp\n");
-      myManualObject->setVisible(false);
-      return Render | Finished;
-    }
-    geometry_msgs::Point32 p;
-    p.x = intersection.x;
-    p.y = intersection.y;
-    p.z = 0;
-    mouse_publisher_.publish(p);
+
   } else {
     if (kDebug) printf("Sky\n");
   }

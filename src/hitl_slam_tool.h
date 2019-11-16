@@ -35,6 +35,8 @@
 #include <rviz/tool.h>
 #endif
 
+#include <eigen3/Eigen/Dense>
+
 namespace rviz {
   class ViewportMouseEvent;
 }  // namespace rviz
@@ -45,11 +47,19 @@ namespace Ogre {
 
 namespace rviz_hitl_slam {
 
+enum class State {
+  kDisabled = 0,
+  kStartLineA,
+  kLineA,
+  kStartLineB,
+  kLineB
+};
+
 class HitlSlamTool : public rviz::Tool {
 Q_OBJECT
 public:
   ros::NodeHandle n_;
-  ros::Publisher mouse_publisher_;
+  ros::Publisher publisher_;
 
   HitlSlamTool();
   ~HitlSlamTool();
@@ -61,10 +71,15 @@ public:
 
   virtual int processMouseEvent(rviz::ViewportMouseEvent& event);
 
-  Ogre::ManualObject* myManualObject;
-  float start_x;
-  float start_y;
-  bool selection_active;
+  void Publish();
+
+  Ogre::ManualObject* line_a_object_;
+  Ogre::ManualObject* line_b_object_;
+  Eigen::Vector2f line_a_start;
+  Eigen::Vector2f line_a_end;
+  Eigen::Vector2f line_b_start;
+  Eigen::Vector2f line_b_end;
+  State state;
 
 };
 
