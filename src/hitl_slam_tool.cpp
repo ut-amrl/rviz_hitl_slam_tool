@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <iostream>
+
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreEntity.h>
 #include <OGRE/OgreManualObject.h>
@@ -66,6 +68,13 @@ HitlSlamTool::~HitlSlamTool() {
 }
 
 void HitlSlamTool::onInitialize() {
+  std::cout << "Initializing" << std::endl;
+  if (!Ogre::ResourceGroupManager::getSingleton().resourceGroupExists("rviz")) {
+    Ogre::ResourceGroupManager::getSingleton().createResourceGroup("rviz");
+    Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("rviz");
+    std::cout << "Is Rviz Initialized: " << Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("rviz") << std::endl;
+  }
+  std::cout << "Running" << std::endl;
   line_a_object_ = scene_manager_->createManualObject("hitl_line_a");
   Ogre::SceneNode* line_a_node =
       scene_manager_->getRootSceneNode()->createChildSceneNode(
