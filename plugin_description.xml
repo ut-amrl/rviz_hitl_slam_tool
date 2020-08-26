@@ -1,4 +1,4 @@
-<library path="lib/libhitl_slam_tool">
+<library path="lib/librviz_hitl_slam_tool">
   <class name="rviz_hitl_slam/HitlSlamTool"
          type="rviz_hitl_slam::HitlSlamTool"
          base_class_type="rviz::Tool">

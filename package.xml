@@ -1,0 +1,28 @@
+<package>
+  <name>rviz_hitl_slam_tool</name>
+  <version>0.0.1</version>
+  <description>
+    Allows the user to draw lines that are Co-Linear after SLAM optimization.
+  </description>
+  <maintainer email="jbachman@umass.edu">Jack Bachman</maintainer>
+  <license>BSD</license>
+
+  <url>http://ros.org/wiki/foo_core</url>
+  <author email="jbachman@umass.edu">Jack Bachman</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_runtime</build_depend>
+  <build_depend>rviz</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+</package>
+
